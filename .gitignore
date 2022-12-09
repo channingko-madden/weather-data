@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+# build
+build/
+
+# vcpkg
+vcpkg_installed/
+
+#neovim
+.ccls
