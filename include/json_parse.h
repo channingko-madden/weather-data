@@ -1,24 +1,24 @@
 /**
- * @file payload_parser.h
- * @date 12/8/2022
+ * @file json_parse.h
+ * @date 12/9/2022
  *
- * @brief payloadparser namespace declaration
+ * @brief jsonparse namespace declaration
  */
 
-#ifndef PAYLOAD_PARSER_H
-#define PAYLOAD_PARSER_H
+#ifndef JSON_PARSE_H
+#define JSON_PARSE_H
 
-#include "weather_data.h"
+#include "data/weather_data.h"
 
 #include <jsoncpp/json/value.h>
 #include <string>
 #include <regex>
 
 /**
- * @namespace payloadparser
- * @brief Classes and functions for parsing the JSON formatted weather data
+ * @namespace jsonparse
+ * @brief Generic classes and functions for parsing JSON formatted data
  */
-namespace payloadparser {
+namespace jsonparse {
 
     /** @brief A regex for identifying yyyy-mm-dd date strings
      *  It captures the year, month, and day in capture groups
@@ -51,20 +51,19 @@ namespace payloadparser {
 
     /**
      * @brief Parse a JSON Schema containing weather data 
-     * @param[in] json_string A JSON formatted string containing a JSON Schema for a weather data point.
+     * @param[in] schema A JSON object containing a JSON Schema for a weather data point. 
+     *
      * A weather point Schmea contains the following key/value pairs:
-     * - "date": string (format: "yyyy-mm-dd")
+     * - "date": string (format: "yyyy-mm-dd") [REQUIRED]
      * - "tmax": number
      * - "tmin": number
      * - "tmean": number
      * - "ppt": number
      *
-     * If any number type key/value pair is missing, the returned WeatherData object will contain a NaN value for 
-     * that variable.
-     * @throws IncorrectJson if parsing the string fails, or if the Schema is missing the "date" key
-     * @return Weather data object with values initialized by the JSON Schema
+     * If any key/value pair is missing, the returned object's optional will not be set
+     * @throws IncorrectJson if the schema is not an object
      */
     WeatherData parseWeather(const Json::Value& schema) noexcept(false);
 
-}
-#endif
+} // jsonparse
+#endif // JSON_PARSE_H

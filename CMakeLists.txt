@@ -19,12 +19,15 @@ find_package(GTest REQUIRED)
 find_package(date REQUIRED)
 
 set(LIB_SOURCES
-    ${WD_SOURCE_DIR}/weather_data/payload_parser.cpp
+    ${WD_SOURCE_DIR}/weather_data/json_parse.cpp
 )
 
 add_library(WeatherData SHARED ${LIB_SOURCES})
 target_include_directories(WeatherData PUBLIC
     ${WD_INCLUDE_DIR}
+)
+target_compile_features(WeatherData PRIVATE
+    cxx_std_17
 )
 target_link_libraries(WeatherData
     jsoncpp
@@ -44,7 +47,6 @@ target_compile_features(parseweather PRIVATE
 target_link_libraries(parseweather PRIVATE
     WeatherData
     CLI11::CLI11
-    jsoncpp
 )
 
 #install(TARGETS appmap-app
@@ -52,19 +54,19 @@ target_link_libraries(parseweather PRIVATE
 ##    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 ## Tests ##
-add_executable(payload_parser_test
-    test/payload_parser_test.cpp
+add_executable(json_parse_test
+    test/json_parse_test.cpp
 )
 
-target_include_directories(payload_parser_test PUBLIC
+target_include_directories(json_parse_test PUBLIC
     ${WD_INCLUDE_DIR}
 )
 
-target_compile_features(payload_parser_test PRIVATE
+target_compile_features(json_parse_test PRIVATE
     cxx_std_17
 )
 
-target_link_libraries(payload_parser_test PRIVATE
+target_link_libraries(json_parse_test PRIVATE
     WeatherData
     GTest::gtest_main
 )
