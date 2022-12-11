@@ -20,6 +20,8 @@ find_package(date REQUIRED)
 
 set(LIB_SOURCES
     ${WD_SOURCE_DIR}/weather_data/json_parse.cpp
+    ${WD_SOURCE_DIR}/weather_data/data/weather_data.cpp
+    ${WD_SOURCE_DIR}/weather_data/data/weather_archive.cpp
 )
 
 add_library(WeatherData SHARED ${LIB_SOURCES})
@@ -36,7 +38,8 @@ target_link_libraries(WeatherData
 
 ## parseweather script ##
 add_executable(parseweather
-    src/parse_weather.cpp
+    ${WD_SOURCE_DIR}/parse_weather.cpp
+    ${WD_SOURCE_DIR}/weather_data/parse_weather_driver.cpp
 )
 target_include_directories(parseweather PUBLIC
     ${WD_INCLUDE_DIR}

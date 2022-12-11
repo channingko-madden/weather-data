@@ -35,7 +35,16 @@ std::vector<WeatherData> WeatherArchive::retrieveRange(
             const auto end_it = mWeatherMap.find(end_sec);
             // regardless if end_sec is within the map or not
             // (aka end_it = map.end()) this is valid
-            return std::vector<WeatherData>{begin_it, end_it};
+            std::vector<WeatherData> retData;
+            retData.reserve(std::distance(begin_it, end_it));
+            for (auto it = begin_it; it != mWeatherMap.end(); ++it) {
+                retData.push_back(it->second);
+                if (it == end_it) {
+                    break;
+                }
+            }
+
+            return retData;
         }
     }
 

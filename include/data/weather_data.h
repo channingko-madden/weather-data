@@ -10,6 +10,8 @@
 
 #include <chrono>
 #include <optional>
+#include <ostream>
+#include <string>
 
 
 /**
@@ -37,6 +39,10 @@ public:
  
     /**<@brief The concentration of a gas in the atmosphere, in parts per trillion (ppt), if available */
     std::optional<float> gas_ppt;
+
+
+    // Overload ostream operator for easily displaying data contents
+    friend std::ostream& operator<< (std::ostream& out, const WeatherData& data);
 
 };
 #endif // WEATHER_DATA_H

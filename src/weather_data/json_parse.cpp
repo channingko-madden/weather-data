@@ -27,6 +27,23 @@ namespace jsonparse {
             throw IncorrectJson(errors);
     }
 
+    std::optional<std::chrono::seconds::rep> dateToUnix(const std::string& date_string) {
+        // check that string contains a yyyy-mm-dd and capture year, month, day
+        // using regex
+        std::smatch searchResult;
+        if (std::regex_search(date_string, searchResult, dateRegex)) {
+            // date library syntax is year/month/day
+            const auto date = date::year{std::stoi(searchResult.str(1))} /
+                std::stoi(searchResult.str(2))/
+                std::stoi(searchResult.str(3));
+            // convert to UTM/GMT time
+            return std::chrono::duration_cast<std::chrono::seconds>(
+                    date::sys_days{date}.time_since_epoch()).count();
+        }  else {
+            return std::nullopt;
+        }
+    }
+
     WeatherData parseWeather(const Json::Value& schema) {
         if (!schema.isObject()) {
             throw IncorrectJson();
@@ -35,19 +52,7 @@ namespace jsonparse {
         WeatherData data;
 
         if (schema.isMember("date") && schema["date"].isString()) {
-            const auto dateString = schema["date"].asString();
-            // check that string contains a yyyy-mm-dd and capture year, month, day
-            // using regex
-            std::smatch searchResult;
-            if (std::regex_search(dateString, searchResult, dateRegex)) {
-                // date library syntax is year/month/day
-                const auto date = date::year{std::stoi(searchResult.str(1))} /
-                    std::stoi(searchResult.str(2))/
-                    std::stoi(searchResult.str(3));
-                // convert to UTM/GMT time
-                data.time = std::chrono::duration_cast<std::chrono::seconds>(
-                        date::sys_days{date}.time_since_epoch()).count();
-            } 
+            data.time = dateToUnix(schema["date"].asString());
         }
 
         if (schema.isMember("tmax") && schema["tmax"].isNumeric()) {

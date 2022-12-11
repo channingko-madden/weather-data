@@ -43,11 +43,21 @@ namespace jsonparse {
       }
     };
 
-    /** @brief Return a JSON Schema created from a json string
-     *  @throws IncorrectJson if parsing the string fails
-     *  @param[in] json_string
-     *  @return JSON Schema */
+    /** 
+     * @brief Return a JSON Schema created from a json string
+     * @throws IncorrectJson if parsing the string fails
+     * @param[in] json_string
+     * @return JSON Schema
+     */
     Json::Value json_from_string(const std::string& json_string) noexcept(false);
+
+    /**
+     * @brief Convert a YYYY-MM-DD date string to Unix (UTC) time
+     * (Number of seconds since January 1st, 1970 UTC)
+     * @param[in] date_string The date string in YYYY-MM-DD format
+     * @return The corresponding UTC Unix time
+     */
+    std::optional<std::chrono::seconds::rep> dateToUnix(const std::string& date_string);
 
     /**
      * @brief Parse a JSON Schema containing weather data 
