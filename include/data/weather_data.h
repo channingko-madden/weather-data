@@ -1,6 +1,6 @@
 /**
  * @file weather_data.h
- * @date 12/9/2022
+ * @date 12/12/2022
  *
  * @brief WeatherData class declaration
  */
@@ -40,8 +40,11 @@ public:
     /**<@brief The concentration of a gas in the atmosphere, in parts per trillion (ppt), if available */
     std::optional<float> gas_ppt;
 
+    // Overload comparison operators b/c they are not default created (compiler warning)
+    bool operator!= (const WeatherData& other) const;
+    bool operator== (const WeatherData& other) const;
 
-    // Overload ostream operator for easily displaying data contents
+    // Overload ostream operator for easily displaying data contents for debugging
     friend std::ostream& operator<< (std::ostream& out, const WeatherData& data);
 
 };

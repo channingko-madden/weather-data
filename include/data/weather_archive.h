@@ -1,6 +1,6 @@
 /**
  * @file weather_archive.h
- * @date 12/9/2022
+ * @date 12/12/2022
  *
  * @brief WeatherArchive class declaration
  */
@@ -25,7 +25,11 @@ public:
     /**
      * @brief Add a new weather data point into the archive
      *
-     * If weather data does not have a timestamp it cannot be added to the archive.
+     * If there already exists a data point in the archive with the same timestamp it
+     * is replaced.
+     * If weather data does not have a timestamp it cannot be added to the archive, and 
+     * this method does nothing.
+     *
      * @param[in] data Weather data
      */
     void addData(const WeatherData& data);

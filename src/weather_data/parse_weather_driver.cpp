@@ -9,15 +9,18 @@
 #include "json_parse.h"
 
 #include "jsoncpp/json/value.h"
+#include "date/date.h"
 #include <algorithm>
 #include <regex>
 #include <fstream>
 #include <iostream>
 #include <cmath>
 #include <iomanip>
+#include <random>
+#include <chrono>
 
 void ParseWeatherDriver::setOptions(CLI::App& app) {
-    // json input file is required, is checked that the file exists
+    // json input file is required. Use CLI to check that the file exists
     mpFileOption = app.add_option(
             "-f, --file",
             mInputFilename,
@@ -26,14 +29,6 @@ void ParseWeatherDriver::setOptions(CLI::App& app) {
         ->required()
         ->check(CLI::ExistingFile);
                 
-
-    /*
-    std::string outFilename {"weather_output.json"};
-    app.add_option(
-            "-o, --out",
-            outFilename,
-    */
-
     // date option
     mpDateOption = app.add_option(
             "-d, --date",
@@ -45,7 +40,9 @@ void ParseWeatherDriver::setOptions(CLI::App& app) {
                 if (std::regex_match(str, match, jsonparse::dateRegex)) {
                     return std::string();
                 } else {
-                    throw CLI::ValidationError("DateOptionError", "Incorrect input for -d, --date option");
+                    throw CLI::ValidationError(
+                            "DateOptionError",
+                            "Incorrect input for -d, --date option");
                 }
             });
 
@@ -53,15 +50,15 @@ void ParseWeatherDriver::setOptions(CLI::App& app) {
     mpRangeOption = app.add_option(
             "-r, --range",
             mOptionSingleString,
-            "Return all weather data from the specific time range. "
-            "Formatted as YYYY-MM-DD|YYYY-MM-DD\n"
+            "Return all weather data from the specific time range as a JSON Array"
+            "The input must be formatted as YYYY-MM-DD|YYYY-MM-DD\n"
             "Ex: -r 2022-01-01|2022-12-31\n"
             "\t(note: In the terminal, the | character will be interpreted as the "
             "pipe command. Therefore it needs to be escaped.\n"
-            "\tex: 2022-01-01\\|2022-12-31)\n")
+            "\tex: 2022-01-01\\|2022-12-31)")
         ->excludes(mpDateOption) // exludes so that only one option is accepted at a time
         ->check([this](const std::string& str) {
-            if (checkRangeString(str)) {
+            if (checkDateRange(str)) {
                 return std::string();
             } else {
                 throw CLI::ValidationError("RangeOptionError", "Incorrect input for -r, --range option");
@@ -82,11 +79,13 @@ void ParseWeatherDriver::setOptions(CLI::App& app) {
 
     // historical sample option, validity is easier checked with the parsed contents
     mpSampleHistoryOption = app.add_option(
-            "-s, --sample-historical",
+            "-s, --sample-history",
             mOptionMultiString,
             "Return weather data similar to the --range option, except that for each date "
             "within the range, randomly select a year from the second option,\n"
-            "and return the data from the same day of the randomly chosen year."
+            "and return the data from the same day of the randomly chosen year.\n"
+            "If there is no avaialable data for a given date, it is ommitted from"
+            "the returned data."
             "\nInput is expected in the format: YYYY-MM-DD|YYYY-MM-DD YYYY|YYYY"
             "\nEx: -s 2022-01-01|2022-12-31 2018|2022")
         ->expected(2)
@@ -96,9 +95,8 @@ void ParseWeatherDriver::setOptions(CLI::App& app) {
 }
 
 void ParseWeatherDriver::run(CLI::App& app) {
-    std::cout << "Run called\n";
-
-    if (mpFileOption && mpFileOption->count()) { // This should always be true since this is required, but be safe and check
+    // This should always be true since this is required, but be safe and check
+    if (mpFileOption && mpFileOption->count()) { 
         if (!readInputFile()) { // error messages are output within this function
             return;
         }
@@ -118,10 +116,9 @@ void ParseWeatherDriver::run(CLI::App& app) {
     } else if (mpSampleHistoryOption && mpSampleHistoryOption->count()) {
         runSampleHistoryOption();
     }
-    std::cout << "Run finished\n";
 }
 
-bool ParseWeatherDriver::checkRangeString(const std::string& range_string) const {
+bool ParseWeatherDriver::checkDateRange(const std::string& range_string) const {
 
     if (range_string.size() != DateRangeLength) {
         //std::cout << "Range string is not proper length\n";
@@ -172,7 +169,6 @@ bool ParseWeatherDriver::readInputFile() {
         }
     }
 
-    std::cout << "Loaded the json file\n";
     return true;
 }
 
@@ -198,11 +194,13 @@ void ParseWeatherDriver::runRangeOption() const {
     const auto startUnix = jsonparse::dateToUnix(mOptionSingleString.substr(0, 10));
     const auto finishUnix = jsonparse::dateToUnix(mOptionSingleString.substr(11, 10));
 
-    const auto rangeData = mArchive.retrieveRange(startUnix.value(), finishUnix.value()); 
+    printWeatherData(mArchive.retrieveRange(startUnix.value(), finishUnix.value())); 
+}
 
+void ParseWeatherDriver::printWeatherData(const std::vector<WeatherData>& data) const {
     // create a json array for printing
     Json::Value outputArray = Json::arrayValue;
-    for (const auto& data : rangeData) {
+    for (const auto& data : data) {
         outputArray.append(jsonparse::createWeatherJson(data));
     }
 
@@ -222,7 +220,7 @@ void ParseWeatherDriver::runMeanOption() const {
     // one of the inputs should be a date range string, the other should be a
     // variable name
     
-    if (checkRangeString(mOptionMultiString[0])) {
+    if (checkDateRange(mOptionMultiString[0])) {
         const auto it = std::find(
                 VariableStrings.cbegin(),
                 VariableStrings.cend(),
@@ -247,7 +245,7 @@ void ParseWeatherDriver::runMeanOption() const {
                     + mOptionMultiString[1] + "\" is not recognized\n");
         }
 
-    } else if (checkRangeString(mOptionMultiString[1])) {
+    } else if (checkDateRange(mOptionMultiString[1])) {
         const auto it = std::find(
                 VariableStrings.cbegin(),
                 VariableStrings.cend(),
@@ -327,6 +325,121 @@ double ParseWeatherDriver::calcVariableMean(const std::string& range_string,
 }
 
 void ParseWeatherDriver::runSampleHistoryOption() const {
+    if (mOptionMultiString.size() != 2) { // cli11 should guarentee this
+        throw CLI::ValidationError(
+                "SampleHistoryOptionError",
+                "Incorrect input for -s, --sample-history option. This option expects "
+                "two inputs\n");
+    }
 
+    // one of the inputs should be a date range string, the other should be a
+    // year range string
+    if (checkDateRange(mOptionMultiString[0]) 
+            && checkYearRange(mOptionMultiString[1])) {
+        printWeatherData(sampleHistoricalData(mOptionMultiString[0], mOptionMultiString[1]));
+    } else if (checkDateRange(mOptionMultiString[1]) 
+            && checkYearRange(mOptionMultiString[0])) {
+        printWeatherData(sampleHistoricalData(mOptionMultiString[1], mOptionMultiString[0]));
+    } else {
+        throw CLI::ValidationError(
+                "SampleHistoryOptionError",
+                "Incorrect input for -s, --sample-history option.\n");
+    }
 }
 
+bool ParseWeatherDriver::checkYearRange(const std::string& year_range) const {
+    if (year_range.size() != YearRangeLength) {
+        //std::cout << "Range string is not proper length\n";
+        return false;
+    }
+
+    std::smatch match;
+    if (!std::regex_match(year_range.cbegin(), year_range.cbegin() + 4, 
+                match, jsonparse::yearRegex)
+        || !std::regex_match(year_range.cbegin() + 5, year_range.cend(),
+            match, jsonparse::yearRegex)) {
+        return false;
+    }
+
+    // since regex validates years, stoi will not throw
+    return std::stoi(year_range.substr(0, 4)) <= std::stoi(year_range.substr(5));
+}
+
+std::vector<WeatherData> ParseWeatherDriver::sampleHistoricalData(
+            const std::string& date_range,
+            const std::string& year_range) const {
+
+    date::sys_days startDays;
+    std::smatch searchResult;
+    if (std::regex_match(
+                date_range.cbegin(), date_range.cbegin() + 10,
+                searchResult, jsonparse::dateRegex)) {
+        // date library syntax is year/month/day
+        startDays = date::year{std::stoi(searchResult.str(1))} /
+            std::stoi(searchResult.str(2))/
+            std::stoi(searchResult.str(3));
+    } else { // should not occur since date_range has already been verified for correct format
+        return {};
+    }
+
+    date::sys_days finishDays;
+    if (std::regex_match(
+                date_range.cbegin() + 11, date_range.cend(),
+                searchResult, jsonparse::dateRegex)) {
+        // date library syntax is year/month/day
+        finishDays = date::year{std::stoi(searchResult.str(1))} /
+            std::stoi(searchResult.str(2))/
+            std::stoi(searchResult.str(3));
+    } else {
+        return {};
+    }
+
+    std::vector<WeatherData> retData; // vector that is returned
+
+    const auto startSampleYears = std::stoi(year_range.substr(0, 4));
+    const auto finishSampleYears = std::stoi(year_range.substr(5));
+
+    // initialize a vector with the possible sample years
+    std::vector<int> sampleYears(finishSampleYears - startSampleYears + 1);
+    std::iota(sampleYears.begin(), sampleYears.end(), startSampleYears);
+
+    auto numGenerator = std::mt19937{std::random_device{}()};  // random_device for shuffle
+    for (auto i = startDays; i <= finishDays; ) {
+        const date::year_month_day ymd = i;
+
+        /* Randomly shuffle the vector containing the sample years.
+         * Starting with the year in the front of the vector, attempt to get the data point
+         * from that year. If there is no data point, try the next year.
+         * If there is not data point at all, then this is an error!
+        */
+        std::shuffle(sampleYears.begin(), sampleYears.end(), numGenerator);
+
+        auto dataOpt = [&]() -> std::optional<WeatherData> {
+            for (const auto& year : sampleYears) {
+                // create year_month_day object, then convert it UTM/GMT time,
+                // and finally query mArchive for the data
+                const auto sampleData = mArchive.retrieve(
+                        std::chrono::duration_cast<std::chrono::seconds>(
+                            date::sys_days{date::year{year}/ymd.month()/ymd.day()}.time_since_epoch()
+                        ).count());
+
+                if (sampleData.has_value()) {
+                    return sampleData;
+                }
+            }
+
+            return std::nullopt;
+        }();
+
+        if (dataOpt.has_value()) {
+            // assign the time for the expected output
+            dataOpt.value().time = std::chrono::duration_cast<std::chrono::seconds>(
+                    i.time_since_epoch()).count();
+            retData.push_back(dataOpt.value());
+        } 
+
+        i = i + date::days{1};
+    }
+
+    return retData;
+}

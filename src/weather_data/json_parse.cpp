@@ -72,19 +72,19 @@ namespace jsonparse {
         }
 
         if (schema.isMember(TMAX_KEY) && schema[TMAX_KEY].isNumeric()) {
-            data.maxTemp = schema[TMAX_KEY].asDouble();
+            data.maxTemp = schema[TMAX_KEY].asFloat();
         }
 
         if (schema.isMember(TMIN_KEY) && schema[TMIN_KEY].isNumeric()) {
-            data.minTemp = schema[TMIN_KEY].asDouble();
+            data.minTemp = schema[TMIN_KEY].asFloat();
         } 
 
         if (schema.isMember(TMEAN_KEY) && schema[TMEAN_KEY].isNumeric())  {
-            data.meanTemp = schema[TMEAN_KEY].asDouble();
+            data.meanTemp = schema[TMEAN_KEY].asFloat();
         } 
 
         if (schema.isMember(PPT_KEY) && schema[PPT_KEY].isNumeric())  {
-            data.gas_ppt = schema[PPT_KEY].asDouble();
+            data.gas_ppt = schema[PPT_KEY].asFloat();
         } 
 
         return data;

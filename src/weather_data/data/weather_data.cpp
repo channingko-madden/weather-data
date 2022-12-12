@@ -1,12 +1,11 @@
 /**
  * @file weather_data.cpp
- * @date 12/9/2022
+ * @date 12/12/2022
  *
  * @brief WeatherData class definition
  */
 
 #include "data/weather_data.h"
-
 
 std::ostream& operator << (std::ostream& out, const WeatherData& data) {
     out << "time:\t";
@@ -35,4 +34,16 @@ std::ostream& operator << (std::ostream& out, const WeatherData& data) {
     }
 
     return out;
+}
+
+bool WeatherData::operator!= (const WeatherData& other) const {
+    return time != other.time || maxTemp != other.maxTemp 
+        || minTemp != other.minTemp || meanTemp != other.meanTemp
+        || gas_ppt != other.gas_ppt;
+}
+
+bool WeatherData::operator== (const WeatherData& other) const {
+    return time == other.time && maxTemp == other.maxTemp 
+        && minTemp == other.minTemp && meanTemp == other.meanTemp
+        && gas_ppt == other.gas_ppt;
 }

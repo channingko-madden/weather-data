@@ -30,6 +30,12 @@ public:
     static constexpr int DateRangeLength = 21;
 
     /** 
+     * @brief The length of a string containing a year range in the accept format
+     * of YYYY|YYYY
+     */
+    static constexpr int YearRangeLength = 9;
+
+    /** 
      * @brief Strings denoting weather data variable names that are accepted
      * by the --mean option
      */
@@ -57,12 +63,12 @@ private:
      * A valid date range string has the following requirements
      * - It is DateRangeLength in size
      * - The substrings before and after the '|' character conform the to proper date format
-     * - The first date is a time before the second date
+     * - The first date is a time at or before the second date
      *
      * @param[in] range_string
      * @return True if the string exactly matches the format, false otherwise
      */
-    bool checkRangeString(const std::string& range_string) const;
+    bool checkDateRange(const std::string& range_string) const;
 
     /**
      * @brief Read a json data file containing weather data, and store the
@@ -83,6 +89,12 @@ private:
      * Validity of the input has already be checked by the parser
      */
     void runRangeOption() const;
+
+    /**
+     * @brief Print weather data within a JSON Array
+     * @param[in] data Weather data to print
+     */
+    void printWeatherData(const std::vector<WeatherData>& data) const;
 
     /**
      * @brief Run the functionality of the --mean option
@@ -120,6 +132,39 @@ private:
      */
     void runSampleHistoryOption() const noexcept(false);
 
+    /**
+     * @brief Check the validity of a year range in the format YYYY|YYYY
+     * A valid year range string has the following requirements
+     * - It is YearRangeLength in size
+     * - The substrings before and after the '|' character conform the to proper year format
+     * - The first year is chronologically at or before the second year
+     *
+     * @param[in] year_range A year range string in the format YYYY|YYYY
+     * @return True if the string exactly matches the format, false otherwise
+     */
+    bool checkYearRange(const std::string& year_range) const;
+
+    /**
+     * @brief Create a collection of weather data with dates for each day specified by the
+     * date_range parameter. However, the data returned for each date is determined by
+     * first randomly choosing a year that is within the range specified by the year_range
+     * parameter, then returning the data from the same day & month of the randomly 
+     * selected year. If there is no avaialable data within the year_range for a 
+     * given date, it is ommitted from the returned data.
+     *
+     * Assumes the passed parameters are in the correct format, the validity of the
+     * parameters is not checked
+     *
+     * @param[in] date_range A date range string: YYYY-MM-DD|YYYY-MM-DD
+     * @param[in] year_range A year range string: YYYY|YYYY
+     *
+     * @return The historically sampled data. An empty vector denotes that there is no data 
+     * available within the date_range for any year requested.
+     */
+    std::vector<WeatherData> sampleHistoricalData(
+            const std::string& date_range,
+            const std::string& year_range) const;
+
     // Option pointers
     CLI::Option* mpFileOption {nullptr};
     CLI::Option* mpDateOption {nullptr};
@@ -128,7 +173,6 @@ private:
     CLI::Option* mpSampleHistoryOption {nullptr};
 
     std::string mInputFilename; /**<@brief Absolute file path for input json file */
-    std::string mOutputFilename; /**<@brief Absolute file path for output json file */
     std::string mOptionSingleString; /**<@brief String passed to an option that accepts a single string */
     /**@brief Strings passed to an option that accepts multiple values */
     std::vector<std::string> mOptionMultiString;

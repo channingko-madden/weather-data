@@ -60,16 +60,29 @@ target_link_libraries(parseweather PRIVATE
 add_executable(json_parse_test
     test/json_parse_test.cpp
 )
-
 target_include_directories(json_parse_test PUBLIC
     ${WD_INCLUDE_DIR}
 )
-
 target_compile_features(json_parse_test PRIVATE
     cxx_std_17
 )
-
 target_link_libraries(json_parse_test PRIVATE
+    WeatherData
+    GTest::gtest_main
+)
+
+add_executable(weather_archive_test
+    test/weather_archive_test.cpp
+)
+target_include_directories(weather_archive_test PUBLIC
+    ${WD_INCLUDE_DIR}
+)
+
+target_compile_features(weather_archive_test PRIVATE
+    cxx_std_17
+)
+
+target_link_libraries(weather_archive_test PRIVATE
     WeatherData
     GTest::gtest_main
 )

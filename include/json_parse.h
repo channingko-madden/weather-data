@@ -20,10 +20,14 @@
  */
 namespace jsonparse {
 
-    /** @brief A regex for identifying yyyy-mm-dd date strings
-     *  It captures the year, month, and day in capture groups
+    /** 
+     * @brief A regex for identifying yyyy-mm-dd date strings
+     * It captures the year, month, and day in capture groups
      */
     const std::regex dateRegex = std::regex("([12]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))");
+
+    /** @brief A regex for identifying yyyy year strings */
+    const std::regex yearRegex = std::regex("[12]\\d{3}");
     
     /**@brief String for date key within the JSON data */
     const std::string DATE_KEY {"date"}; 
