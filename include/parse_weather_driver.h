@@ -1,6 +1,6 @@
 /**
  * @file parse_weather_driver.h
- * @date 12/9/2022
+ * @date 12/12/2022
  *
  * @brief The driver class for the parseweather cli script
  */
@@ -8,6 +8,7 @@
 #ifndef PARSE_WEATHER_DRIVER_H
 #define PARSE_WEATHER_DRIVER_H
 
+#include "json_parse.h"
 #include "data/weather_archive.h"
 
 #include <CLI/CLI.hpp>
@@ -28,6 +29,14 @@ public:
      */
     static constexpr int DateRangeLength = 21;
 
+    /** 
+     * @brief Strings denoting weather data variable names that are accepted
+     * by the --mean option
+     */
+    const std::vector<std::string> VariableStrings{
+        jsonparse::TMAX_KEY, jsonparse::TMIN_KEY,
+        jsonparse::TMEAN_KEY, jsonparse::PPT_KEY};
+
     /**
      * @brief Set the parseweather script options on the app object
      * @param[in] app App object used for parsing CLI inputs
@@ -36,8 +45,10 @@ public:
 
     /**
      * @brief Run the script based on the command-line arguments
+     * @throws CLI::ValidationError if invalid inputs are passed to 
+     * any options.
      */
-    void run(CLI::App& app);
+    void run(CLI::App& app) noexcept(false);
 
 private:
 
@@ -77,18 +88,44 @@ private:
      * @brief Run the functionality of the --mean option
      *
      * Checks the validity of the inputs passed to the mean option (-m, --mean)
-     * Allowed inputs are:
+     * Allowed inputs are (in any order):
      * - A date range: YYYY-MM-DD|YYYY-MM-DD
      * - A string denoting the variable: tmax, tmin, tmean, or ppt
+     * @throws CLI::ValidationError if inputs are not valid
      */
-    void runMeanOption() const;
+    void runMeanOption() const noexcept(false);
+
+    /**
+     * @brief Calculate the mean for a given variable, over a given date range
+     *
+     * If a variable is missing for a given day within the range, it is ignored
+     * as part of the calculation
+     * @param[in] range_string A date range string: YYYY-MM-DD|YYYY-MM-DD
+     * @param[in] variable_name A string denoting the variable (ex. "tmax")
+     * @return The calculated mean, or NaN if either variable_name is unrecognized
+     * of the variable is missing from the entire date range
+     */
+    double calcVariableMean(
+            const std::string& range_string,
+            const std::string& variable_name) const;
+
+    /**
+     * @brief Run the functionality for the --sample option
+     *
+     * Checks the validity of the inputs passed to the sample option
+     * Allowed inputs are (in exact order):
+     * - A date range: YYYY-MM-DD|YYYY-MM-DD
+     * - A year range: YYYY|YYYY
+     * @throws CLI::ValidationError if inputs are not valid
+     */
+    void runSampleHistoryOption() const noexcept(false);
 
     // Option pointers
     CLI::Option* mpFileOption {nullptr};
     CLI::Option* mpDateOption {nullptr};
     CLI::Option* mpRangeOption {nullptr};
     CLI::Option* mpMeanOption {nullptr};
-    CLI::Option* mpHistoricalOption {nullptr};
+    CLI::Option* mpSampleHistoryOption {nullptr};
 
     std::string mInputFilename; /**<@brief Absolute file path for input json file */
     std::string mOutputFilename; /**<@brief Absolute file path for output json file */

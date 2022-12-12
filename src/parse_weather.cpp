@@ -1,6 +1,6 @@
 /**
  * @file parse_weather.cpp
- * @date 12/8/2022
+ * @date 12/12/2022
  *
  * @brief The parseweather cli script
  */
@@ -21,9 +21,9 @@ int main(int argc, char** argv) {
 
         driver.setOptions(app);
 
-        app.parse(argc, argv);
+        app.parse(argc, argv); // can throw CLI::Error
 
-        driver.run(app);
+        driver.run(app); // can throw CLI::Error 
 
     } catch (const CLI::Error& error) {
         return app.exit(error);

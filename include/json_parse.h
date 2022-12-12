@@ -1,6 +1,6 @@
 /**
  * @file json_parse.h
- * @date 12/9/2022
+ * @date 12/12/2022
  *
  * @brief jsonparse namespace declaration
  */
@@ -16,7 +16,7 @@
 
 /**
  * @namespace jsonparse
- * @brief Generic classes and functions for parsing JSON formatted data
+ * @brief Generic classes, functions, etc. useful for parsing JSON formatted data
  */
 namespace jsonparse {
 
@@ -24,6 +24,14 @@ namespace jsonparse {
      *  It captures the year, month, and day in capture groups
      */
     const std::regex dateRegex = std::regex("([12]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))");
+    
+    /**@brief String for date key within the JSON data */
+    const std::string DATE_KEY {"date"}; 
+    const std::string TMAX_KEY {"tmax"}; /**<@brief String for tmax key within the JSON data*/
+    const std::string TMIN_KEY {"tmin"}; /**<@brief String for tmin key within the JSON data*/
+    const std::string TMEAN_KEY {"tmean"}; /**<@brief String for tmean key within the JSON data*/
+    const std::string PPT_KEY {"ppt"}; /**<@brief String for ppt key within the JSON data*/
+
 
     /** @brief This struct defines the exception thrown to report an incorrect json argument */
     struct IncorrectJson : public std::exception

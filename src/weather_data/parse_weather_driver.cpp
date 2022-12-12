@@ -1,6 +1,6 @@
 /**
  * @file parse_weather_driver.cpp
- * @date 12/9/2022
+ * @date 12/12/2022
  *
  * @brief The driver class for the parseweather cli script
  */
@@ -9,9 +9,12 @@
 #include "json_parse.h"
 
 #include "jsoncpp/json/value.h"
+#include <algorithm>
 #include <regex>
 #include <fstream>
 #include <iostream>
+#include <cmath>
+#include <iomanip>
 
 void ParseWeatherDriver::setOptions(CLI::App& app) {
     // json input file is required, is checked that the file exists
@@ -53,9 +56,9 @@ void ParseWeatherDriver::setOptions(CLI::App& app) {
             "Return all weather data from the specific time range. "
             "Formatted as YYYY-MM-DD|YYYY-MM-DD\n"
             "Ex: -r 2022-01-01|2022-12-31\n"
-            "(note: In the terminal, the | character will be interpreted as the "
+            "\t(note: In the terminal, the | character will be interpreted as the "
             "pipe command. Therefore it needs to be escaped.\n"
-            "ex: 2022-01-01\\|2022-12-31\n")
+            "\tex: 2022-01-01\\|2022-12-31)\n")
         ->excludes(mpDateOption) // exludes so that only one option is accepted at a time
         ->check([this](const std::string& str) {
             if (checkRangeString(str)) {
@@ -72,18 +75,18 @@ void ParseWeatherDriver::setOptions(CLI::App& app) {
             "Return the mean of the variable provided over the "
             "specific time range. Time range formatted as YYYY-MM-DD|YYYY-MM-DD."
             "\nPossible variable options are: tmax, tmin, tmean, and ppt."
-            "\nEx: -m 2022-01-01|2022-12-31 tmax ")
+            "\nEx: -m 2022-01-01|2022-12-31 tmax  or -m tmax 2022-01-01|2022-12-31")
         ->expected(2)
         ->excludes(mpDateOption) // excludes so that only one option is accepted at a time
         ->excludes(mpRangeOption);
 
     // historical sample option, validity is easier checked with the parsed contents
-    mpHistoricalOption = app.add_option(
+    mpSampleHistoryOption = app.add_option(
             "-s, --sample-historical",
             mOptionMultiString,
-            "Return weather data similar to a range (-r) option, except that for each date "
-            "within the range, randomly select a year from the second option, and return "
-            "the data from the same day of the randomly chosen year."
+            "Return weather data similar to the --range option, except that for each date "
+            "within the range, randomly select a year from the second option,\n"
+            "and return the data from the same day of the randomly chosen year."
             "\nInput is expected in the format: YYYY-MM-DD|YYYY-MM-DD YYYY|YYYY"
             "\nEx: -s 2022-01-01|2022-12-31 2018|2022")
         ->expected(2)
@@ -95,21 +98,25 @@ void ParseWeatherDriver::setOptions(CLI::App& app) {
 void ParseWeatherDriver::run(CLI::App& app) {
     std::cout << "Run called\n";
 
-    if (mpFileOption->count()) { // This should always be true since this is required, but be safe and check
-        if (!readInputFile()) {
+    if (mpFileOption && mpFileOption->count()) { // This should always be true since this is required, but be safe and check
+        if (!readInputFile()) { // error messages are output within this function
             return;
         }
     } else {
-        std::cout << "An error occurred, the required --file option was not passed\n";
-        return;
+        throw CLI::ValidationError(
+                "FileOptionError",
+                "An error occurred, the required --file option was not passed\n");
     }
 
-    if (mpDateOption->count()) {
+    // run options!
+    if (mpDateOption && mpDateOption->count()) {
         runDateOption();
-    } else if (mpRangeOption->count()) {
+    } else if (mpRangeOption && mpRangeOption->count()) {
         runRangeOption();
-    } else if (mpMeanOption->count()) {
-    } else if (mpHistoricalOption->count()) {
+    } else if (mpMeanOption && mpMeanOption->count()) {
+        runMeanOption(); // can throw CLI::ValidationError
+    } else if (mpSampleHistoryOption && mpSampleHistoryOption->count()) {
+        runSampleHistoryOption();
     }
     std::cout << "Run finished\n";
 }
@@ -117,7 +124,7 @@ void ParseWeatherDriver::run(CLI::App& app) {
 bool ParseWeatherDriver::checkRangeString(const std::string& range_string) const {
 
     if (range_string.size() != DateRangeLength) {
-        std::cout << "Range string is not proper length\n";
+        //std::cout << "Range string is not proper length\n";
         return false;
     }
 
@@ -206,14 +213,120 @@ void ParseWeatherDriver::runRangeOption() const {
 void ParseWeatherDriver::runMeanOption() const {
 
     if (mOptionMultiString.size() != 2) { // cli11 should guarentee this
-        std::cout << "An error occurred, the --mean option expects two inputs\n";
-        return;
+        throw CLI::ValidationError(
+                "MeanOptionError",
+                "Incorrect input for -m, --mean option. This option expects "
+                "two inputs\n");
     }
 
-    // one of the inputs should be a date range string
+    // one of the inputs should be a date range string, the other should be a
+    // variable name
     
     if (checkRangeString(mOptionMultiString[0])) {
+        const auto it = std::find(
+                VariableStrings.cbegin(),
+                VariableStrings.cend(),
+                mOptionMultiString[1]);
 
+        if (it != VariableStrings.end()) {
+            const auto mean = calcVariableMean(mOptionMultiString[0], *it);
+            std::cout << "Time range: " << mOptionMultiString[0] << "\t" <<
+                " Variable: " << *it << "\n";
+            if (std::isnan(mean)) {
+                std::cout << "Could not calculate a mean; data for variable \""
+                    << *it << "\" is not present within the time range " 
+                    << mOptionMultiString[0] << "\n";
+            } else {
+                std::cout << "mean: " << std::fixed << std::setprecision(3) 
+                    << mean << "\n";
+            }
+        } else {
+            throw CLI::ValidationError(
+                    "MeanOptionError",
+                    "Incorrect input for -m, --mean option. The variable \""
+                    + mOptionMultiString[1] + "\" is not recognized\n");
+        }
+
+    } else if (checkRangeString(mOptionMultiString[1])) {
+        const auto it = std::find(
+                VariableStrings.cbegin(),
+                VariableStrings.cend(),
+                mOptionMultiString[0]);
+
+        if (it != VariableStrings.end()) {
+            const auto mean = calcVariableMean(mOptionMultiString[1], *it);
+            std::cout << "Time range: " << mOptionMultiString[1] << "\t" <<
+                " Variable: " << *it << "\n" ;
+            if (std::isnan(mean)) {
+                std::cout << "Could not calculate a mean; data for variable \""
+                    << *it << "\" is not present within the time range " 
+                    << mOptionMultiString[1] << "\n";
+            } else {
+                std::cout << "mean: " << std::fixed << std::setprecision(3) 
+                    << mean << "\n";
+            }
+        } else {
+            throw CLI::ValidationError(
+                    "MeanOptionError",
+                    "Incorrect input for -m, --mean option. The variable \""
+                    + mOptionMultiString[0] + "\" is not recognized\n");
+        }
+    } else {
+        throw CLI::ValidationError(
+                "MeanOptionError",
+                "Incorrect input for -m, --mean option. This option expects one "
+                "input to be a date range\n");
     }
+}
+
+double ParseWeatherDriver::calcVariableMean(const std::string& range_string, 
+        const std::string& variable_name) const {
+    const auto startUnix = jsonparse::dateToUnix(range_string.substr(0, 10));
+    const auto finishUnix = jsonparse::dateToUnix(range_string.substr(11, 10));
+
+    const auto rangeData = mArchive.retrieveRange(startUnix.value(), finishUnix.value()); 
+
+    std::size_t count = 0;
+    double sum = 0;
+    if (variable_name == jsonparse::TMAX_KEY) {
+        for (const auto& data : rangeData) {
+            if (data.maxTemp.has_value()) {
+                count++;
+                sum += data.maxTemp.value();;
+            }
+        }
+
+    } else if (variable_name == jsonparse::TMIN_KEY) {
+        for (const auto& data : rangeData) {
+            if (data.minTemp.has_value()) {
+                count++;
+                sum += data.minTemp.value();;
+            }
+        }
+    } else if (variable_name == jsonparse::TMEAN_KEY) {
+        for (const auto& data : rangeData) {
+            if (data.meanTemp.has_value()) {
+                count++;
+                sum += data.meanTemp.value();;
+            }
+        }
+    } else if (variable_name == jsonparse::PPT_KEY) {
+        for (const auto& data : rangeData) {
+            if (data.gas_ppt.has_value()) {
+                count++;
+                sum += data.gas_ppt.value();;
+            }
+        }
+    }
+
+    if (count > 0) {
+        return sum / count;
+    } else {
+        return std::nan("");
+    }
+}
+
+void ParseWeatherDriver::runSampleHistoryOption() const {
+
 }
 

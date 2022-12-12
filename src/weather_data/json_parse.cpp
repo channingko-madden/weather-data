@@ -1,6 +1,6 @@
 /**
  * @file json_parse.cpp
- * @date 12/8/2022
+ * @date 12/12/2022
  *
  * @brief jsonparse namespace definition
  */
@@ -36,8 +36,7 @@ namespace jsonparse {
     }
 
     std::optional<std::chrono::seconds::rep> dateToUnix(const std::string& date_string) {
-        // check that string contains a yyyy-mm-dd and capture year, month, day
-        // using regex
+        // check that string contains a yyyy-mm-dd and capture year, month, day using regex
         std::smatch searchResult;
         if (std::regex_search(date_string, searchResult, dateRegex)) {
             // date library syntax is year/month/day
@@ -53,7 +52,6 @@ namespace jsonparse {
     }
 
     std::string unixToDate(const std::chrono::seconds::rep& unix_time_sec) {
-
         const auto dayObj = date::year_month_day{date::floor<date::days>(date::sys_seconds{
                 std::chrono::seconds(unix_time_sec)})};
 
@@ -67,26 +65,26 @@ namespace jsonparse {
             throw IncorrectJson();
         }
 
-        WeatherData data;
+        WeatherData data; // object that is returned
 
-        if (schema.isMember("date") && schema["date"].isString()) {
-            data.time = dateToUnix(schema["date"].asString());
+        if (schema.isMember(DATE_KEY) && schema[DATE_KEY].isString()) {
+            data.time = dateToUnix(schema[DATE_KEY].asString());
         }
 
-        if (schema.isMember("tmax") && schema["tmax"].isNumeric()) {
-            data.maxTemp = schema["tmax"].asDouble();
+        if (schema.isMember(TMAX_KEY) && schema[TMAX_KEY].isNumeric()) {
+            data.maxTemp = schema[TMAX_KEY].asDouble();
         }
 
-        if (schema.isMember("tmin") && schema["tmin"].isNumeric()) {
-            data.minTemp = schema["tmin"].asDouble();
+        if (schema.isMember(TMIN_KEY) && schema[TMIN_KEY].isNumeric()) {
+            data.minTemp = schema[TMIN_KEY].asDouble();
         } 
 
-        if (schema.isMember("tmean") && schema["tmean"].isNumeric())  {
-            data.meanTemp = schema["tmean"].asDouble();
+        if (schema.isMember(TMEAN_KEY) && schema[TMEAN_KEY].isNumeric())  {
+            data.meanTemp = schema[TMEAN_KEY].asDouble();
         } 
 
-        if (schema.isMember("ppt") && schema["ppt"].isNumeric())  {
-            data.gas_ppt = schema["ppt"].asDouble();
+        if (schema.isMember(PPT_KEY) && schema[PPT_KEY].isNumeric())  {
+            data.gas_ppt = schema[PPT_KEY].asDouble();
         } 
 
         return data;
@@ -95,27 +93,26 @@ namespace jsonparse {
     Json::Value createWeatherJson(const WeatherData& weather_data) {
         Json::Value root;
         if (weather_data.time.has_value()) {
-            root["date"] = unixToDate(weather_data.time.value());
+            root[DATE_KEY] = unixToDate(weather_data.time.value());
         }
 
         if (weather_data.maxTemp.has_value()) {
-            root["tmax"] = weather_data.maxTemp.value();
+            root[TMAX_KEY] = weather_data.maxTemp.value();
         }
 
         if (weather_data.minTemp.has_value()) {
-            root["tmin"] = weather_data.minTemp.value();
+            root[TMIN_KEY] = weather_data.minTemp.value();
         }
 
         if (weather_data.meanTemp.has_value()) {
-            root["tmean"] = weather_data.meanTemp.value();
+            root[TMEAN_KEY] = weather_data.meanTemp.value();
         }
 
         if (weather_data.gas_ppt.has_value()) {
-            root["ppt"] = weather_data.gas_ppt.value();
+            root[PPT_KEY] = weather_data.gas_ppt.value();
         }
 
         return root;
     }
-
 } // jsonparse
 
