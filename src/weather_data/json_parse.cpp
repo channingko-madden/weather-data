@@ -8,11 +8,13 @@
 #include "json_parse.h"
 
 #include <jsoncpp/json/reader.h>
+#include <jsoncpp/json/writer.h>
 #include "date/date.h"
 #include <cmath>
 #include <regex>
 #include <memory>
 #include <chrono>
+#include <sstream>
 
 namespace jsonparse {
 
@@ -25,6 +27,12 @@ namespace jsonparse {
             return json;
         else
             throw IncorrectJson(errors);
+    }
+
+    std::string jsonPretty(const Json::Value& schema) {
+        Json::StreamWriterBuilder wbuilder;
+        wbuilder["precision"] = 6; // limit total precision to 6 
+        return Json::writeString(wbuilder, schema);
     }
 
     std::optional<std::chrono::seconds::rep> dateToUnix(const std::string& date_string) {
@@ -42,6 +50,16 @@ namespace jsonparse {
         }  else {
             return std::nullopt;
         }
+    }
+
+    std::string unixToDate(const std::chrono::seconds::rep& unix_time_sec) {
+
+        const auto dayObj = date::year_month_day{date::floor<date::days>(date::sys_seconds{
+                std::chrono::seconds(unix_time_sec)})};
+
+        std::ostringstream daybuffer;
+        daybuffer << dayObj;
+        return daybuffer.str();
     }
 
     WeatherData parseWeather(const Json::Value& schema) {
@@ -72,6 +90,31 @@ namespace jsonparse {
         } 
 
         return data;
+    }
+
+    Json::Value createWeatherJson(const WeatherData& weather_data) {
+        Json::Value root;
+        if (weather_data.time.has_value()) {
+            root["date"] = unixToDate(weather_data.time.value());
+        }
+
+        if (weather_data.maxTemp.has_value()) {
+            root["tmax"] = weather_data.maxTemp.value();
+        }
+
+        if (weather_data.minTemp.has_value()) {
+            root["tmin"] = weather_data.minTemp.value();
+        }
+
+        if (weather_data.meanTemp.has_value()) {
+            root["tmean"] = weather_data.meanTemp.value();
+        }
+
+        if (weather_data.gas_ppt.has_value()) {
+            root["ppt"] = weather_data.gas_ppt.value();
+        }
+
+        return root;
     }
 
 } // jsonparse

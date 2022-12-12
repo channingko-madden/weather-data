@@ -46,7 +46,7 @@ private:
      * A valid date range string has the following requirements
      * - It is DateRangeLength in size
      * - The substrings before and after the '|' character conform the to proper date format
-     * - The first date is a timem before the second date
+     * - The first date is a time before the second date
      *
      * @param[in] range_string
      * @return True if the string exactly matches the format, false otherwise
@@ -54,23 +54,34 @@ private:
     bool checkRangeString(const std::string& range_string) const;
 
     /**
-     * @brief Check the validity of the inputs passed to the mean option (-m, --mean)
-     * Allowed inputs are:
-     * - A date range: YYYY-MM-DD|YYYY-MM-DD
-     * - A string denoting the variable: tmax, tmin, tmean, or ppt
-     * @param[in] mean_inputs The parsed inputs for the mean option
-     * @return True if inputs are valid, otherwise false
-     */
-    bool checkMeanOption(const std::vector<std::string>& mean_inputs) const;
-
-    /**
      * @brief Read a json data file containing weather data, and store the
      * data within the WeatherArchive member variable mArchive
-     * @param[in] filename Absolute path to json data file
      *
      * If the data file cannot be read, mArchive will not be modified
      */
-    void readDataFile(const std::string& filename);
+    bool readInputFile();
+
+    /**
+     * @brief Run functionality for the --date option
+     * Validity of the input has already be checked by the parser
+     */
+    void runDateOption() const;
+
+    /**
+     * @brief Run functionality of the --range option
+     * Validity of the input has already be checked by the parser
+     */
+    void runRangeOption() const;
+
+    /**
+     * @brief Run the functionality of the --mean option
+     *
+     * Checks the validity of the inputs passed to the mean option (-m, --mean)
+     * Allowed inputs are:
+     * - A date range: YYYY-MM-DD|YYYY-MM-DD
+     * - A string denoting the variable: tmax, tmin, tmean, or ppt
+     */
+    void runMeanOption() const;
 
     // Option pointers
     CLI::Option* mpFileOption {nullptr};

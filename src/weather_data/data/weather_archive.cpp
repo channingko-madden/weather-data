@@ -17,9 +17,9 @@ std::optional<WeatherData> WeatherArchive::retrieve(
         const WeatherData::data_time time) const {
     const auto it = mWeatherMap.find(time);
     if (it != mWeatherMap.end()) {
-        return std::optional<WeatherData>(it->second);
+        return it->second;
     } else {
-        return std::optional<WeatherData>();
+        return std::nullopt;
     }
 }
 
@@ -43,10 +43,9 @@ std::vector<WeatherData> WeatherArchive::retrieveRange(
                     break;
                 }
             }
-
             return retData;
         }
     }
 
-    return std::vector<WeatherData>();
+    return {};
 }
