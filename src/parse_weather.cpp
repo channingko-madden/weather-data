@@ -3,16 +3,17 @@
  * @date 12/12/2022
  *
  * @brief The parseweather cli script
+ *
+ * Run: parseweather -h for information on how to use the script
  */
 
 #include "parse_weather_driver.h"
-#include "date/date.h"
 #include <CLI/CLI.hpp>
 
 int main(int argc, char** argv) {
 
-    CLI::App app {"A script that takes in json formatted weather data and parses it according"
-        " to the command you give it"};
+    CLI::App app {"A script that accepts a file with JSON formatted weather data and parses "
+        "it according to the options below."};
 
     // Driver object that contains member fields for the various input fields
     ParseWeatherDriver driver;

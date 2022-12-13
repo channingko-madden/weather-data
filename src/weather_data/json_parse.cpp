@@ -18,15 +18,19 @@
 
 namespace jsonparse {
 
-    Json::Value json_from_string(const std::string& json_string) {
-        Json::CharReaderBuilder builder;
+    Json::Value jsonFromString(const std::string& json_string) {
+        const Json::CharReaderBuilder builder;
         const auto reader = std::unique_ptr<Json::CharReader>(builder.newCharReader());
         Json::Value json;
         std::string errors;
-        if(reader->parse(json_string.c_str(), json_string.c_str() + json_string.size(), &json, &errors))
+        if(reader->parse(json_string.c_str(), 
+                    json_string.c_str() + json_string.size(),
+                    &json,
+                    &errors)) {
             return json;
-        else
+        } else {
             throw IncorrectJson(errors);
+        }
     }
 
     std::string jsonPretty(const Json::Value& schema) {

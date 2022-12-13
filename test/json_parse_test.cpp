@@ -40,7 +40,7 @@ TEST_F(PayloadParserTest, ParseValidWeatherData) {
         "\"ppt\": 0.0}"};
 
     EXPECT_NO_THROW({
-        const auto weatherData = jsonparse::parseWeather(jsonparse::json_from_string(validWeatherData));
+        const auto weatherData = jsonparse::parseWeather(jsonparse::jsonFromString(validWeatherData));
         ASSERT_FLOAT_EQ(weatherData.maxTemp.value(), 28.758f);
         ASSERT_FLOAT_EQ(weatherData.minTemp.value(), 3.896f);
         ASSERT_FLOAT_EQ(weatherData.meanTemp.value(), 16.327f);
@@ -58,7 +58,7 @@ TEST_F(PayloadParserTest, ParseInvalidDate) {
         "\"ppt\": 0.0}"};
 
     EXPECT_NO_THROW({
-        const auto weatherData = jsonparse::parseWeather(jsonparse::json_from_string(invalidDate));
+        const auto weatherData = jsonparse::parseWeather(jsonparse::jsonFromString(invalidDate));
         ASSERT_TRUE(weatherData.time.has_value()) << "time should be set";
         ASSERT_FLOAT_EQ(weatherData.maxTemp.value(), 28.758f);
         ASSERT_FLOAT_EQ(weatherData.minTemp.value(), 3.896f);
@@ -73,7 +73,7 @@ TEST_F(PayloadParserTest, ParseInvalidDate) {
         "\"ppt\": 0.0}"};
 
     EXPECT_NO_THROW( {
-            const auto weatherData = jsonparse::parseWeather(jsonparse::json_from_string(noDate)); 
+            const auto weatherData = jsonparse::parseWeather(jsonparse::jsonFromString(noDate)); 
             ASSERT_FALSE(weatherData.time.has_value()) << "time should not be set";
             ASSERT_FLOAT_EQ(weatherData.maxTemp.value(), 28.758f);
             ASSERT_FLOAT_EQ(weatherData.minTemp.value(), 3.896f);
@@ -87,7 +87,7 @@ TEST_F(PayloadParserTest, ParseNoNumeralData) {
     const std::string noTmaxData{"{\"date\": \"2016-03-03\"}"};
 
     EXPECT_NO_THROW({
-        const auto weatherData = jsonparse::parseWeather(jsonparse::json_from_string(noTmaxData));
+        const auto weatherData = jsonparse::parseWeather(jsonparse::jsonFromString(noTmaxData));
         ASSERT_TRUE(weatherData.time.has_value()) << "time should be set";
         ASSERT_FALSE(weatherData.maxTemp.has_value()) << "maxTemp should not be set";
         ASSERT_FALSE(weatherData.minTemp.has_value()) << "minTemp should not be set";

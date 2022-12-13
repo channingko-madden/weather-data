@@ -10,13 +10,12 @@
 
 #include "json_parse.h"
 #include "data/weather_archive.h"
-
 #include <CLI/CLI.hpp>
 #include <string>
 #include <vector>
 
 /**
- * @class ParseWeatherDriver parse_weather_driver.cpp "parse_weather_driver.h"
+ * @class ParseWeatherDriver parse_weather_driver.h "parse_weather_driver.h"
  * @brief This class contains the driver code and logic for the parseweather
  * command-line script
  */
@@ -24,13 +23,13 @@ class ParseWeatherDriver {
 public:
 
     /** 
-     * @brief The length of a string containing a date range in the accept format
+     * @brief The length of a range date string in the accept format
      * of YYYY-MM-DD|YYYY-MM-DD
      */
     static constexpr int DateRangeLength = 21;
 
     /** 
-     * @brief The length of a string containing a year range in the accept format
+     * @brief The length of a year range string in the accept format
      * of YYYY|YYYY
      */
     static constexpr int YearRangeLength = 9;
@@ -50,31 +49,36 @@ public:
     void setOptions(CLI::App& app);
 
     /**
-     * @brief Run the script based on the command-line arguments
+     * @brief Run the script based on the command-line arguments.
+     *
+     * Must be called after setOptions has set the options, and cli input
+     * has been parsed.
      * @throws CLI::ValidationError if invalid inputs are passed to 
      * any options.
+     * @param[in] app App object with parsed CLI inputs
      */
     void run(CLI::App& app) noexcept(false);
 
 private:
 
     /**
-     * @brief Check the validity of a date range in the format YYYY-MM-DD|YYYY-MM-DD
+     * @brief Check the validity of a date range (YYYY-MM-DD|YYYY-MM-DD)
      * A valid date range string has the following requirements
      * - It is DateRangeLength in size
      * - The substrings before and after the '|' character conform the to proper date format
      * - The first date is a time at or before the second date
      *
-     * @param[in] range_string
+     * @param[in] range_string A date range string (YYYY-MM-DD|YYYY-MM-DD)
      * @return True if the string exactly matches the format, false otherwise
      */
     bool checkDateRange(const std::string& range_string) const;
 
     /**
-     * @brief Read a json data file containing weather data, and store the
-     * data within the WeatherArchive member variable mArchive
+     * @brief Read the json data file containing weather data passed by the
+     * --file option, and store the data within member variable mArchive
      *
      * If the data file cannot be read, mArchive will not be modified
+     * @return True if the data was read and parsed successfully, false otherwise
      */
     bool readInputFile();
 
@@ -91,7 +95,7 @@ private:
     void runRangeOption() const;
 
     /**
-     * @brief Print weather data within a JSON Array
+     * @brief Print weather data as a JSON Array
      * @param[in] data Weather data to print
      */
     void printWeatherData(const std::vector<WeatherData>& data) const;
@@ -112,6 +116,7 @@ private:
      *
      * If a variable is missing for a given day within the range, it is ignored
      * as part of the calculation
+     * 
      * @param[in] range_string A date range string: YYYY-MM-DD|YYYY-MM-DD
      * @param[in] variable_name A string denoting the variable (ex. "tmax")
      * @return The calculated mean, or NaN if either variable_name is unrecognized
@@ -145,7 +150,9 @@ private:
     bool checkYearRange(const std::string& year_range) const;
 
     /**
-     * @brief Create a collection of weather data with dates for each day specified by the
+     * @brief Create a collection of weather data by randomly sampling data over a year range.
+     *
+     * Create a collection of weather data with dates for each day specified by the
      * date_range parameter. However, the data returned for each date is determined by
      * first randomly choosing a year that is within the range specified by the year_range
      * parameter, then returning the data from the same day & month of the randomly 
@@ -166,18 +173,19 @@ private:
             const std::string& year_range) const;
 
     // Option pointers
-    CLI::Option* mpFileOption {nullptr};
-    CLI::Option* mpDateOption {nullptr};
-    CLI::Option* mpRangeOption {nullptr};
-    CLI::Option* mpMeanOption {nullptr};
-    CLI::Option* mpSampleHistoryOption {nullptr};
+    CLI::Option* mpFileOption {nullptr}; /**<@brief --file option */
+    CLI::Option* mpDateOption {nullptr}; /**<@brief --date option */
+    CLI::Option* mpRangeOption {nullptr}; /**<@brief --range option */
+    CLI::Option* mpMeanOption {nullptr}; /**<@brief --mean option */
+    CLI::Option* mpSampleHistoryOption {nullptr}; /**<@brief --sample option */
 
-    std::string mInputFilename; /**<@brief Absolute file path for input json file */
-    std::string mOptionSingleString; /**<@brief String passed to an option that accepts a single string */
-    /**@brief Strings passed to an option that accepts multiple values */
+    std::string mInputFilename; /**<@brief Absolute file path for input JSON file*/
+    /**@brief String passed to an option that accepts a single string input*/
+    std::string mOptionSingleString; 
+    /**@brief Strings passed to an option that accepts multiple string inputs*/
     std::vector<std::string> mOptionMultiString;
 
-    WeatherArchive mArchive;
+    WeatherArchive mArchive; /**<@brief Store/retrieve weather data*/
 
 };
 #endif // PARSE_WEATHER_DRIVER_H

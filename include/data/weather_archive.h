@@ -27,10 +27,10 @@ public:
      *
      * If there already exists a data point in the archive with the same timestamp it
      * is replaced.
-     * If weather data does not have a timestamp it cannot be added to the archive, and 
+     * If the data does not have a timestamp it cannot be added to the archive, and 
      * this method does nothing.
      *
-     * @param[in] data Weather data
+     * @param[in] data Weather data to add
      */
     void addData(const WeatherData& data);
 
@@ -55,9 +55,10 @@ public:
 
 private:
 
-    /**@brief Store weather in a map, using the time as a key
-     * An ordered map is chosen so that ranges of data can be
-     * easily created */
+    /**@brief Store weather data in a map, using the time as the key.
+     *
+     * An ordered map is used so that ranges of data can be easily created
+     */
     std::map<WeatherData::data_time, WeatherData> mWeatherMap;
 
 };

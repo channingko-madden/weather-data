@@ -78,4 +78,61 @@ TEST_F(WeatherArchiveTest, RetrieveNoData) {
 
 /** @brief Test retrieving data using a range of dates */
 TEST_F(WeatherArchiveTest, RetrieveDataRange) {
+
+    // length of the range of data to create and add to WeatherArchive. This value must be a multiple of 2
+    // for partsof this test
+    const int RangeLength = 10;
+    ASSERT_EQ((RangeLength % 2), 0) << "Error in setup of RetrieveDataRange test, RangeLength "
+        << "must be a multiple of 2";
+
+    WeatherData newData;
+    newData.time = std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count();
+    newData.maxTemp = 12.3;
+    newData.minTemp = 1.34;
+    newData.meanTemp = 5.43;
+    newData.gas_ppt = 0.134;
+
+    // Save the start and finish of the date range to use with WeatherData::retrieveRange
+    const auto startTime = newData.time.value();
+    const auto finishTime = newData.time.value() + RangeLength;
+
+    std::vector<WeatherData> addedData; // store the added data for comparison later
+    addedData.reserve(RangeLength);
+
+    WeatherArchive archive; // archive object to use for this test
+
+    // Add data to the archive and also save for later
+    for (auto i = 0; i < 10; ++i) {
+        archive.addData(newData);
+        addedData.push_back(newData);
+        newData.time = newData.time.value() + 1;
+        newData.maxTemp = newData.maxTemp.value() + 1;
+        newData.minTemp = newData.minTemp.value() + 1;
+        newData.meanTemp = newData.meanTemp.value() + 1;
+        newData.gas_ppt = newData.gas_ppt.value() + 1;
+    }
+
+    // retrieve data we know should be there
+    auto retrieveRangeData = archive.retrieveRange(startTime, finishTime);
+    ASSERT_EQ(retrieveRangeData.size(), RangeLength) << 
+        "WeatherArchive::retrieveRange returned " << retrieveRangeData.size() <<
+        " data points when it should have returned " << RangeLength << " points";
+
+    for (auto i = 0; i < RangeLength; ++i) {
+        ASSERT_EQ(retrieveRangeData[i], addedData[i]) 
+            << "Retrieved range data does not match the data that was added";
+    }
+
+    // retrieve data, where added data is available for only part of the input date range
+    retrieveRangeData = archive.retrieveRange(finishTime - (RangeLength / 2), finishTime);
+    ASSERT_EQ(retrieveRangeData.size(), (RangeLength / 2)) << 
+        "WeatherArchive::retrieveRange returned " << retrieveRangeData.size() <<
+        " data points when it should have returned " << (RangeLength / 2) << " points";
+
+    // retrieve data, where added data is within the input date range
+    retrieveRangeData = archive.retrieveRange(finishTime + 1, finishTime + 1 + RangeLength);
+    ASSERT_TRUE(retrieveRangeData.empty()) << 
+        "WeatherArchive::retrieveRange returned " << retrieveRangeData.size() <<
+        " data points when it should have not returned any points";
 }

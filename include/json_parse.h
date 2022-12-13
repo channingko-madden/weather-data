@@ -37,7 +37,7 @@ namespace jsonparse {
     const std::string PPT_KEY {"ppt"}; /**<@brief String for ppt key within the JSON data*/
 
 
-    /** @brief This struct defines the exception thrown to report an incorrect json argument */
+    /** @brief This struct defines the exception thrown to report an incorrect JSON argument */
     struct IncorrectJson : public std::exception
     {
       const std::string mError; /**<@brief Error string */
@@ -56,12 +56,12 @@ namespace jsonparse {
     };
 
     /** 
-     * @brief Return a JSON Schema created from a json string
+     * @brief Return a JSON Schema created from a JSON string
      * @throws IncorrectJson if parsing the string fails
-     * @param[in] json_string
-     * @return JSON Schema
+     * @param[in] json_string A string containing JSON data
+     * @return JSON Schema created from the string 
      */
-    Json::Value json_from_string(const std::string& json_string) noexcept(false);
+    Json::Value jsonFromString(const std::string& json_string) noexcept(false);
 
     /**
      * @brief Create a string containing the JSON schema in a human-readible format.
@@ -92,7 +92,6 @@ namespace jsonparse {
 
     /**
      * @brief Parse a JSON Schema containing weather data 
-     * @param[in] schema A JSON object containing a JSON Schema for a weather data point. 
      *
      * A weather point Schema contains the following key/value pairs:
      * - "date": string (format: "yyyy-mm-dd") [REQUIRED]
@@ -101,7 +100,9 @@ namespace jsonparse {
      * - "tmean": number
      * - "ppt": number
      *
+     * @param[in] schema A JSON object containing a JSON Schema for a weather data point. 
      * If any key/value pair is missing, the returned object's optional will not be set
+     *
      * @throws IncorrectJson if the schema is not an object
      * @return Data object containing the parsed weather data
      */
@@ -115,9 +116,11 @@ namespace jsonparse {
      * - "tmin": number
      * - "tmean": number
      * - "ppt": number
+     *
      * @param[in] weather_data The weather data to form the JSON schema with.
      * If weather_data has data that is not set, the corresponding key/value pair will
      * be ommitted from the returned JSON schema.
+     *
      * @return A JSON Schema containing weather data
      */
     Json::Value createWeatherJson(const WeatherData& weather_data);
