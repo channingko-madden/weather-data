@@ -84,7 +84,7 @@ xdg-open html/index.html
 
 ## Future Improvements
 * Improve user warning and error messages
- * When data is missing for range based options
- * When a historical sample cannot be found
+  * When data is missing for range based options
+  * When a historical sample cannot be found
 * Functional tests for parseweather script
 * Clang formatting
