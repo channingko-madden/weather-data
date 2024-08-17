@@ -1,5 +1,5 @@
 # weather-data
-Weather data [technical assessment](docs/Technical_Task.pdf). 
+Weather data [technical assessment](docs/Technical_Task.md). 
 
 ## vcpkg (dependency-manager)
 [vcpkg](https://github.com/microsoft/vcpkg) is used to manage the dependencies for this project.
@@ -63,7 +63,7 @@ parseweather -f example_weather.json -r 2022-01-01\|2022-12-31
 ```
 
 #### Conflict of -h option 
-The [technical assessment](docs/Technical_Task.pdf) asks that there be an option -h or --historical-sample as an
+The [technical assessment](docs/Technical_Task.md) asks that there be an option -h or --historical-sample as an
 extra challenge. I decided to instead change the name of this option to -s or --sample-history because of the conflict
 of the short option -h with the common convention of -h as the short option for --help. I felt it was worth keeping
 in line with the -h, --help convention, and that changing the option name to -s, --sample-history did not make it
